@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:5164 https://localhost:7032; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>DevVault</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- App Bar -->
+  <header id="app-bar" class="hidden">
+    <span class="brand">DevVault</span>
+    <div class="nav-group">
+      <span id="health-status"></span>
+      <span id="user-info"></span>
+      <button class="nav-btn" id="nav-secrets">Secrets</button>
+      <button class="nav-btn" id="nav-users">Usuarios</button>
+      <button class="nav-btn" id="nav-profile">Perfil</button>
+      <button class="nav-btn" id="nav-logout">Salir</button>
+    </div>
+  </header>
+
+  <!-- Global Messages -->
+  <div class="global-msg-container">
+    <div id="global-message" class="message hidden"></div>
+  </div>
+
+  <!-- Auth Sections (shown when not logged in) -->
+  <div id="auth-sections">
+    <div class="view-section" id="login-view"></div>
+    <div class="view-section hidden" id="signup-view"></div>
+  </div>
+
+  <!-- App Sections (shown when logged in) -->
+  <div id="secrets-view" class="view-section hidden">
+    <div id="secrets-msg" class="message hidden"></div>
+    <div id="secrets-content"></div>
+  </div>
+
+  <div id="users-view" class="view-section hidden">
+    <div id="users-msg" class="message hidden"></div>
+    <div id="users-content"></div>
+  </div>
+
+  <div id="profile-view" class="view-section hidden"></div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

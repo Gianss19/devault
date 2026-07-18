@@ -1,9 +1,11 @@
-namespace devalut.Interfaces;
+using Microsoft.Extensions.Primitives;
+
+namespace devault.Interfaces;
 
 public interface IEncryptService
 {
-    public Task Encrypt(string Data);
-    public Task Decrypt(string EncryptedValue);
+    public string Encrypt(string Data);
+    public string Decrypt(string EncryptedValue);
 
     
 }

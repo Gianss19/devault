@@ -1,17 +1,22 @@
-using devalut.Interfaces;
+using System.Text.RegularExpressions;
+using devault.Interfaces;
 
-namespace devalut.Services;
+namespace devault.Services;
 
-public class BcryptService : IEncryptService
+public class BcryptService : IHasherService
 {
-    public Task Decrypt(string EncryptedValue)
+    private const string PasswordPattern = @"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$";
+
+    public string GenerateHash(string Password)
     {
-        throw new NotImplementedException();
+        if(!Regex.IsMatch(Password, PasswordPattern))
+            throw new FormatException("Contraseña No segura.");
+
+        return BCrypt.Net.BCrypt.HashPassword(Password);
     }
 
-    public Task Encrypt(string Data)
+    public bool IsPasswordValid(string Password, string PasswordHash)
     {
-        throw new NotImplementedException();
+        return BCrypt.Net.BCrypt.Verify(Password, PasswordHash);
     }
-
 }

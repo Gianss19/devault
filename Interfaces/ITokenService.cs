@@ -1,7 +1,9 @@
-namespace devalut.Interfaces;
+using devault.Models;
+
+namespace devault.Interfaces;
 
 public interface ITokenService
 {
-    public Task GenerateToken();
+    public string GenerateAccessToken(User user);
     
 }
