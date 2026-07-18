@@ -4,6 +4,8 @@ obj/
 *.suo
 .vs/
 .idea/
+.vscode/
+.continue/
 
 appsettings.Development.json
 appsettings.Production.json
