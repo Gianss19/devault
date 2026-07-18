@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("devalut")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c42cd485423629cce662653ba8f7a989f5df53f0")]
 [assembly: System.Reflection.AssemblyProductAttribute("devalut")]
 [assembly: System.Reflection.AssemblyTitleAttribute("devalut")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

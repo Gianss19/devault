@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using devalut.DTO;
+using devalut.DTO.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace devalut.Controllers;
@@ -23,9 +25,10 @@ public ActionResult Register([FromBody] [Required] UserRegisterDto user)
 
 
 [HttpPost]
-    public IActionResult<TokenDto> Login([FromBody] UserRequestDto user)
+    public IActionResult Login([FromBody] UserAuthRequestDto user)
     {
-
+        string Token = "";
+        
         return Ok(Token);
     }
 

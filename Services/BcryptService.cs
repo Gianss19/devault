@@ -1,17 +1,19 @@
 using devalut.Interfaces;
+using BCrypt.Net;
 
 namespace devalut.Services;
 
-public class BcryptService : IEncryptService
+public class BcryptService : IHasherService
 {
-    public Task Decrypt(string EncryptedValue)
+    public string GenerateHash(string Password)
     {
-        throw new NotImplementedException();
+        var HashedPassword = BCrypt.Net.BCrypt.HashPassword(Password);
+        return HashedPassword;
     }
 
-    public Task Encrypt(string Data)
+    public bool IsPasswordValid(string Password, string PasswordHash)
     {
-        throw new NotImplementedException();
+        var isValid = BCrypt.Net.BCrypt.Verify(Password, PasswordHash);
+        return isValid;
     }
-
 }

@@ -1,3 +1,4 @@
+using devalut.DTO.Secrets;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,19 +14,22 @@ public class SecretsController : ControllerBase
 
     [HttpPost]  
     [Authorize]
-    public IActionResult<SecretResponseDto> Generate ([FromBody] SecretRequestDto secret)
+    public IActionResult Generate ([FromBody] SecretRequestDto secret)
     {
         
         
-        return Created(response);
+        return Created();
 
     }
 
     [HttpGet]
     [Authorize]
     [Route("secrets")]
-    public Task<IActionResult<IReadOnlyList<SecretResponseDto>>> Secrets()
+    public IActionResult Secrets()
     {
+
+        object? ListaResponseDto = null;
+
         return Ok(ListaResponseDto);
     }
 
@@ -33,14 +37,20 @@ public class SecretsController : ControllerBase
     [HttpGet]
     [Authorize]
     [Route("{id:guid}")]
-    public IActionResult<SecretResponseDto> Secrets(Guid id)
+    public IActionResult Secrets(Guid id)
     {
-        return Ok(ResponseDto);
+
+        return Ok();
     }
 
     [HttpDelete]
     [Authorize]
     [Route("{id:guid}")]
     public IActionResult Delete(Guid id)
+    {
+        return Ok();
+
+    }
 
 }
+

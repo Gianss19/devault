@@ -3,6 +3,6 @@ namespace devalut;
 public interface IHasherService
 {
     
-    public Task GenerateHash (string Password);
-    public Task Verify(string Password, string PasswordHash);
+    public string GenerateHash (string Password);
+    public bool IsPasswordValid(string Password, string PasswordHash);
 }
