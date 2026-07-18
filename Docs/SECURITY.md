@@ -1,168 +1,204 @@
-# Security
+# Seguridad / Security
 
-## Philosophy
+## Filosofía / Philosophy
 
+DevVault sigue un modelo de seguridad **Zero Trust**.
 DevVault follows a **Zero Trust** security model.
 
-No user, request, network or device is trusted by default. Every request must be authenticated, authorized and validated before accessing protected resources.
+Ningún usuario, solicitud, red o dispositivo es confiable por defecto. Cada solicitud debe ser autenticada, autorizada y validada antes de acceder a recursos protegidos.
+No user, request, network, or device is trusted by default. Every request must be authenticated, authorized, and validated before accessing protected resources.
 
 ---
 
-# Authentication
+## Autenticación / Authentication
 
 - ASP.NET Core JWT Bearer Authentication
-- Passwords hashed with BCrypt
-- Access Tokens signed using HS256 (HMAC SHA-256)
-- Short-lived Access Tokens (30 min)
-- Refresh Tokens con expiración de 7 días
+- Contraseñas hasheadas con BCrypt / Passwords hashed with BCrypt
+- Access Tokens firmados con HS256 (HMAC SHA-256) / Access Tokens signed with HS256
+- Access Tokens de corta duración (30 min) / Short-lived Access Tokens (30 min)
+- Refresh Tokens con expiración de 7 días / Refresh Tokens with 7-day expiration
 
 ---
 
-# Authorization
+## Autorización / Authorization
 
+Cada endpoint protegido requiere autenticación.
 Every protected endpoint requires authentication.
 
+La autorización se basa en:
 Authorization is based on:
 
-- JWT Signature
-- Claims
-- User Roles
-- Resource Ownership
+- Firma del JWT / JWT Signature
+- Claims del usuario / User claims
+- Roles del usuario / User roles
+- Propiedad del recurso / Resource ownership
 
+Los usuarios solo pueden acceder a sus propios secretos.
 Users may only access their own secrets.
 
 ---
 
-# Encryption
+## Cifrado / Encryption
 
+Los secretos se cifran antes de almacenarse.
 Secrets are encrypted before being stored.
 
-Algorithm:
+**Algoritmo / Algorithm:** AES-256-GCM
 
-- AES-256-GCM
-
+Cada secreto cifrado almacena:
 Each encrypted secret stores:
 
-- Ciphertext
-- Nonce
-- Authentication Tag
+- Ciphertext (texto cifrado / ciphertext)
+- Nonce (vector de inicialización / initialization vector)
+- Authentication Tag (etiqueta de autenticación / authentication tag)
 
+El texto plano de los secretos nunca se almacena en la base de datos.
 Plaintext secrets are never stored in the database.
 
 ---
 
-# Password Security
+## Seguridad de Contraseñas / Password Security
 
+Las contraseñas se hashean usando BCrypt.
 Passwords are hashed using BCrypt.
 
-Passwords are never encrypted.
+Las contraseñas nunca se cifran (solo se hashean).
+Passwords are never encrypted (only hashed).
 
+Las contraseñas nunca se registran en logs.
 Passwords are never logged.
 
+Las contraseñas nunca son recuperables.
 Passwords are never recoverable.
 
+Requisitos de contraseña / Password requirements:
+- Mínimo 8 caracteres / Minimum 8 characters
+- 1 mayúscula / 1 uppercase
+- 1 minúscula / 1 lowercase
+- 1 dígito / 1 digit
+- 1 carácter especial / 1 special character
+
 ---
 
-# JWT Security
+## JWT Security
 
+Los JWTs contienen solo claims no sensibles.
 JWTs contain only non-sensitive claims.
 
-Current claims:
-
-- User Id
-- Username
+Claims actuales / Current claims:
+- User Id (NameIdentifier)
+- Username (Name)
 - Email
-- Role
-- JTI
+- Role (User / Admin)
 
+Los JWTs están firmados digitalmente.
 JWTs are digitally signed.
 
-JWTs are not encrypted.
+Los JWTs no están cifrados (el payload es legible).
+JWTs are not encrypted (payload is readable).
 
 ---
 
-# Transport Security
+## Seguridad en Transporte / Transport Security
 
+Producción requiere HTTPS.
 Production requires HTTPS.
 
+HTTP se redirige automáticamente.
 HTTP is redirected automatically.
 
-HSTS should be enabled.
+HSTS está habilitado en producción.
+HSTS is enabled in production.
 
 ---
 
-# Database Security
+## Seguridad de Base de datos / Database Security
 
-Sensitive values stored:
+Valores sensibles almacenados / Sensitive values stored:
+- Secretos cifrados / Encrypted secrets
+- Hashes de contraseñas / Password hashes
+- Refresh tokens (almacenados en texto, hash planeado) / Refresh tokens (stored plaintext, hashing planned)
 
-- Encrypted Secrets
-- Password Hashes
-- Refresh Token Hashes (planned)
-
+No se almacenan credenciales en texto plano.
 No plaintext credentials are stored.
 
 ---
 
-# Input Validation
+## Validación de Entrada / Input Validation
 
+Cada solicitud es validada.
 Every request is validated.
 
-Model validation is enforced.
+La validación de modelos está habilitada.
+Model validation is enabled.
 
+Entradas inesperadas son rechazadas.
 Unexpected inputs are rejected.
 
 ---
 
-# Rate Limiting
+## Rate Limiting
 
 Política `PerUser` configurada:
+`PerUser` policy configured:
 
-- 10 solicitudes por ventana de 10 segundos
-- Cola de 2 en espera
-- Rechazo con `429 Too Many Requests`
-- Clave por `NameIdentifier` (autenticado) o IP (anónimo)
-
----
-
-# Logging
-
-Security events are logged.
-
-Examples:
-
-- Login
-- Failed Login
-- Secret Created
-- Secret Updated
-- Secret Deleted
-- Password Changed
-
-Secrets themselves are never logged.
+- 10 solicitudes por ventana de 10 segundos / 10 requests per 10-second window
+- Cola de 2 en espera / Queue of 2
+- Rechazo con `429 Too Many Requests` / Rejected with `429 Too Many Requests`
+- Clave por `NameIdentifier` (autenticado) o IP (anónimo) / Keyed by `NameIdentifier` (authenticated) or IP (anonymous)
 
 ---
 
-# Secret Management
+## Headers de Seguridad / Security Headers
 
+Configurados en middleware y meta tags:
+Configured in middleware and meta tags:
+
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: no-referrer`
+- `Content-Security-Policy: frame-ancestors 'none'`
+- CSP en frontend: `script-src 'self'`, `connect-src 'self' http://localhost:5164`
+
+---
+
+## Gestión de Secretos / Secret Management
+
+Los secretos de la aplicación no se incluyen en el control de versiones.
 Application secrets are not committed to source control.
 
-Development:
+Desarrollo / Development:
+- User Secrets de .NET / .NET User Secrets
 
-- User Secrets
-
-Production:
-
-- Environment Variables
-- Azure Key Vault (planned)
+Producción / Production:
+- Variables de entorno / Environment Variables
+- Azure Key Vault (planeado / planned)
 
 ---
 
-# Future Improvements
+## Testing de Seguridad / Security Testing
 
-- Refresh Token Rotation
-- Multi-Factor Authentication
+79 pruebas unitarias cubren modelos, servicios y controllers.
+79 unit tests cover models, services, and controllers.
+
+Pruebas de frontend verifican:
+Frontend tests verify:
+
+- escapeHtml previene XSS / escapeHtml prevents XSS
+- Validación de emails y contraseñas / Email and password validation
+- Enmascaramiento de valores sensibles / Sensitive value masking
+- Gestión de tokens en memoria / In-memory token management
+
+---
+
+## Mejoras Futuras / Future Improvements
+
+- Rotación de Refresh Tokens / Refresh Token Rotation
+- Autenticación Multi-Factor / Multi-Factor Authentication
 - Envelope Encryption
-- Key Rotation
-- Security Headers (HSTS, CSP, X-Frame-Options)
-- Audit Dashboard
-- Device Management
-- Account lockout por intentos fallidos
+- Rotación de claves / Key Rotation
+- Dashboard de auditoría / Audit Dashboard
+- Gestión de dispositivos / Device Management
+- Bloqueo de cuenta por intentos fallidos / Account lockout on failed attempts
+- Hash de refresh tokens / Refresh token hashing
+- Endpoint de refresh token / Refresh token endpoint

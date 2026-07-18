@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "rXwO1TsBQVQ=",
+  "dgSpecHash": "Ivwk5krQNVM=",
   "success": true,
-  "projectFilePath": "C:\\Users\\gian\\Desktop\\devalut\\devalut.csproj",
+  "projectFilePath": "C:\\Users\\gian\\Desktop\\devault\\devault.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\gian\\.nuget\\packages\\aspnetcore.healthchecks.npgsql\\8.0.0\\aspnetcore.healthchecks.npgsql.8.0.0.nupkg.sha512",
     "C:\\Users\\gian\\.nuget\\packages\\bcrypt.net-next\\4.2.0\\bcrypt.net-next.4.2.0.nupkg.sha512",
     "C:\\Users\\gian\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\gian\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\10.0.10\\microsoft.aspnetcore.authentication.jwtbearer.10.0.10.nupkg.sha512",

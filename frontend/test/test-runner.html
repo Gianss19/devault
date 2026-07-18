@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevVault Frontend Tests</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e4e6f0; padding: 1.5rem; }
+    h1 { color: #6c5ce7; margin-bottom: .5rem; }
+    #summary { background: #1a1d27; border: 1px solid #2e3347; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; gap: 1.5rem; align-items: center; }
+    .stat { font-size: .95rem; }
+    .stat strong { font-size: 1.2rem; }
+    .stat-pass strong { color: #2ecc71; }
+    .stat-fail strong { color: #e74c3c; }
+    .stat-total strong { color: #6c5ce7; }
+    #results { display: flex; flex-direction: column; gap: .75rem; }
+    .suite { background: #1a1d27; border: 1px solid #2e3347; border-radius: 8px; overflow: hidden; }
+    .suite-name { padding: .65rem 1rem; background: #242836; font-weight: 600; font-size: .95rem; border-bottom: 1px solid #2e3347; }
+    .test { padding: .45rem 1rem; border-bottom: 1px solid #1e2130; display: flex; align-items: center; gap: .6rem; font-size: .88rem; }
+    .test:last-child { border-bottom: none; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .dot-pass { background: #2ecc71; }
+    .dot-fail { background: #e74c3c; }
+    .test-name { flex: 1; }
+    .test-err { color: #e74c3c; font-size: .8rem; margin-left: 1.5rem; padding: .25rem 0 .5rem; }
+    #running { color: #8b8fa3; padding: 2rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>DevVault - Frontend Tests</h1>
+  <div id="summary" class="hidden">
+    <div class="stat stat-total"><strong id="s-total">0</strong> total</div>
+    <div class="stat stat-pass"><strong id="s-pass">0</strong> passed</div>
+    <div class="stat stat-fail"><strong id="s-fail">0</strong> failed</div>
+  </div>
+  <div id="running">Ejecutando pruebas...</div>
+  <div id="results"></div>
+
+  <script>
+    let suites = [];
+    let currentSuite = null;
+
+    function describe(name, fn) {
+      currentSuite = { name: name, tests: [] };
+      suites.push(currentSuite);
+      fn();
+      currentSuite = null;
+    }
+
+    function it(name, fn) {
+      if (!currentSuite) return;
+      currentSuite.tests.push({ name: name, fn: fn, pass: false, error: null });
+    }
+
+    function expect(actual) {
+      return {
+        toBe(expected) {
+          if (actual !== expected) throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+        },
+        toEqual(expected) {
+          if (JSON.stringify(actual) !== JSON.stringify(expected))
+            throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+        },
+        toBeNull() {
+          if (actual !== null) throw new Error(`Expected null, got ${JSON.stringify(actual)}`);
+        },
+        toBeFalsy() {
+          if (actual) throw new Error(`Expected falsy, got ${JSON.stringify(actual)}`);
+        },
+        toBeTruthy() {
+          if (!actual) throw new Error(`Expected truthy, got ${JSON.stringify(actual)}`);
+        },
+        toContain(sub) {
+          if (typeof actual === 'string') {
+            if (!actual.includes(sub)) throw new Error(`Expected "${actual}" to contain "${sub}"`);
+          } else if (Array.isArray(actual)) {
+            if (!actual.includes(sub)) throw new Error(`Expected array to contain ${JSON.stringify(sub)}`);
+          }
+        },
+        toThrow() {
+          if (typeof actual !== 'function') throw new Error('toThrow expects a function');
+          let threw = false;
+          try { actual(); } catch { threw = true; }
+          if (!threw) throw new Error('Expected function to throw');
+        },
+        toBeGreaterThan(n) {
+          if (!(actual > n)) throw new Error(`Expected ${actual} > ${n}`);
+        },
+        toMatch(regex) {
+          if (!regex.test(actual)) throw new Error(`Expected "${actual}" to match ${regex}`);
+        }
+      };
+    }
+
+    async function runAll() {
+      for (const suite of suites) {
+        for (const t of suite.tests) {
+          try {
+            await t.fn();
+            t.pass = true;
+          } catch (e) {
+            t.pass = false;
+            t.error = e.message;
+          }
+        }
+      }
+      render();
+    }
+
+    function render() {
+      document.getElementById('running').classList.add('hidden');
+      let total = 0, pass = 0, fail = 0;
+      suites.forEach(s => s.tests.forEach(t => { total++; t.pass ? pass++ : fail++; }));
+
+      document.getElementById('summary').classList.remove('hidden');
+      document.getElementById('s-total').textContent = total;
+      document.getElementById('s-pass').textContent = pass;
+      document.getElementById('s-fail').textContent = fail;
+
+      const container = document.getElementById('results');
+      for (const suite of suites) {
+        const sDiv = document.createElement('div');
+        sDiv.className = 'suite';
+        sDiv.innerHTML = '<div class="suite-name">' + suite.name + '</div>';
+        for (const t of suite.tests) {
+          const tDiv = document.createElement('div');
+          tDiv.className = 'test';
+          tDiv.innerHTML =
+            '<span class="dot dot-' + (t.pass ? 'pass' : 'fail') + '"></span>' +
+            '<span class="test-name">' + t.name + '</span>';
+          sDiv.appendChild(tDiv);
+          if (!t.pass && t.error) {
+            const eDiv = document.createElement('div');
+            eDiv.className = 'test-err';
+            eDiv.textContent = t.error;
+            sDiv.appendChild(eDiv);
+          }
+        }
+        container.appendChild(sDiv);
+      }
+    }
+  </script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="utils.test.js"></script>
+  <script src="api.test.js"></script>
+  <script src="auth.test.js"></script>
+  <script>runAll();</script>
+</body>
+</html>

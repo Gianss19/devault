@@ -35,9 +35,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-                ?? ["http://localhost:3000"])
+        policy.SetIsOriginAllowed(origin =>
+              {
+                  if (string.IsNullOrEmpty(origin)) return true;
+                  if (origin == "null") return true;
+                  try
+                  {
+                      var uri = new Uri(origin);
+                      return uri.Host == "localhost" || uri.Host == "127.0.0.1";
+                  }
+                  catch { return false; }
+              })
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -122,14 +130,24 @@ app.UseExceptionHandler(appError =>
     });
 });
 
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("Referrer-Policy", "no-referrer");
+    context.Response.Headers.Append("Content-Security-Policy",
+        "frame-ancestors 'none'");
+    await next();
+});
+
+app.UseCors("AllowFrontend");
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowFrontend");
 
 app.UseRateLimiter();
 
