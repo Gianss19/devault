@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage.Internal;
 
-namespace devalut.Models;
+namespace devault.Models;
 
 public class RefreshToken
 {

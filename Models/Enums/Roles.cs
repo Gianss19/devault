@@ -1,4 +1,4 @@
-namespace devalut.Models.Enums;
+namespace devault.Models.Enums;
 
 public enum Roles
 {

@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using devalut.Entities.Persistance;
+using devault.Entities.Persistance;
 
 #nullable disable
 
-namespace devalut.Data.Migrations
+namespace devault.Data.Migrations
 {
     [DbContext(typeof(DevaultDbContext))]
     partial class DevaultDbContextModelSnapshot : ModelSnapshot
@@ -22,7 +22,7 @@ namespace devalut.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("devalut.Models.RefreshToken", b =>
+            modelBuilder.Entity("devault.Models.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -54,7 +54,7 @@ namespace devalut.Data.Migrations
                     b.ToTable("refresh_tokens", (string)null);
                 });
 
-            modelBuilder.Entity("devalut.Models.Secret", b =>
+            modelBuilder.Entity("devault.Models.Secret", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -88,7 +88,7 @@ namespace devalut.Data.Migrations
                     b.ToTable("secrets", (string)null);
                 });
 
-            modelBuilder.Entity("devalut.Models.User", b =>
+            modelBuilder.Entity("devault.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -127,9 +127,9 @@ namespace devalut.Data.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("devalut.Models.RefreshToken", b =>
+            modelBuilder.Entity("devault.Models.RefreshToken", b =>
                 {
-                    b.HasOne("devalut.Models.User", "User")
+                    b.HasOne("devault.Models.User", "User")
                         .WithMany("RefreshTokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -138,9 +138,9 @@ namespace devalut.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("devalut.Models.Secret", b =>
+            modelBuilder.Entity("devault.Models.Secret", b =>
                 {
-                    b.HasOne("devalut.Models.User", "User")
+                    b.HasOne("devault.Models.User", "User")
                         .WithMany("Secrets")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -149,7 +149,7 @@ namespace devalut.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("devalut.Models.User", b =>
+            modelBuilder.Entity("devault.Models.User", b =>
                 {
                     b.Navigation("RefreshTokens");
 

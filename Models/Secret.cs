@@ -1,4 +1,4 @@
-namespace devalut.Models;
+namespace devault.Models;
 
 public class Secret
 {

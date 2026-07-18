@@ -1,6 +1,6 @@
-using devalut.Models;
+using devault.Models;
 
-namespace devalut.Interfaces;
+namespace devault.Interfaces;
 
 public interface IRefreshTokenService
 {

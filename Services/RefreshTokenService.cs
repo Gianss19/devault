@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
-using devalut.Entities.Persistance;
-using devalut.Interfaces;
-using devalut.Models;
+using devault.Entities.Persistance;
+using devault.Interfaces;
+using devault.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace devalut.Services;
+namespace devault.Services;
 
 public class RefreshTokenService : IRefreshTokenService
 {

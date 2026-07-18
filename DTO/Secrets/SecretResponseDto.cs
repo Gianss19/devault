@@ -1,4 +1,4 @@
-namespace devalut.DTO.Secrets;
+namespace devault.DTO.Secrets;
 
 public record SecretResponseDto
 {

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Primitives;
 
-namespace devalut.Interfaces;
+namespace devault.Interfaces;
 
 public interface IEncryptService
 {

@@ -1,4 +1,4 @@
-namespace devalut;
+namespace devault;
 
 public class WeatherForecast
 {

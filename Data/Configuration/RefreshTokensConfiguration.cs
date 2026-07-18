@@ -1,8 +1,8 @@
-using devalut.Models;
+using devault.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace devalut.Entities.Configuration;
+namespace devault.Entities.Configuration;
 
 public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {

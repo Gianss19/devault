@@ -1,28 +1,21 @@
-using System.Security.Cryptography;
 using System.Text;
-using devalut.Data.Configuration;
-using devalut.Entities.Persistance;
-using devalut.Interfaces;
-using devalut.Services;
+using devault;
+using devault.Data.Configuration;
+using devault.Entities.Persistance;
+using devault.Interfaces;
+using devault.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using devalut.Models;
-using static devalut.Models.User;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
-using devalut.Models.Enums;
-
+using devault.Models.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<DevaultDbContext>(options =>
@@ -31,30 +24,33 @@ builder.Services.AddDbContext<DevaultDbContext>(options =>
 });
 
 builder.Services.Configure<CryptoSettings>(builder.Configuration.GetSection("CryptoSettings"));
-builder.Services.Configure<JwtService>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 builder.Services.AddSingleton<IEncryptService, AesGsmEncryptService>();
 builder.Services.AddScoped<ITokenService, JwtService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<IHasherService, BcryptService>();
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-
 }).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters()
     {
-     ValidateActor = true,
-     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]
-                                                 ?? throw new KeyNotFoundException("SecretKey no encontrada."))),
-     ValidIssuer = builder.Configuration["Jwt:Issuer"],
-     ValidateIssuer = true,
-     ValidateLifetime = true,
-     ValidateAudience = false   
+        ValidateActor = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+            builder.Configuration["Jwt:SecretKey"]
+            ?? throw new KeyNotFoundException("SecretKey no encontrada."))),
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidateIssuer = true,
+        ValidateLifetime = true,
+        ValidateAudience = false
     };
 });
-builder.Services.AddRateLimiter(options=> 
+
+builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
@@ -62,37 +58,67 @@ builder.Services.AddRateLimiter(options=>
     {
         var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if(string.IsNullOrEmpty(userId))
+        if (string.IsNullOrEmpty(userId))
             userId = context.Connection.RemoteIpAddress?.ToString();
-        
+
         return RateLimitPartition.GetFixedWindowLimiter(
-               partitionKey: userId,
-               factory: _=> new FixedWindowRateLimiterOptions
-               {
-                   PermitLimit = 10,
-                   Window =  TimeSpan.FromSeconds(10),
-                   QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                   QueueLimit= 2
-               }
-        );
+            partitionKey: userId!,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromSeconds(10),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 2
+            });
     });
 });
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("Admin", policy=> policy.RequireRole(nameof(Roles.Admin)));
+    options.AddPolicy("Admin", policy => policy.RequireRole(nameof(Roles.Admin)));
 });
-
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
+app.UseExceptionHandler(appError =>
+{
+    appError.Run(async context =>
+    {
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        context.Response.ContentType = "application/json";
+
+        if (exception is KeyNotFoundException)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new { error = exception.Message });
+        }
+        else if (exception is ArgumentException or UnauthorizedAccessException)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new { error = exception.Message });
+        }
+        else
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsJsonAsync(new { error = "Error interno del servidor." });
+        }
+    });
+});
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 

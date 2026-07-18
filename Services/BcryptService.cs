@@ -1,7 +1,7 @@
-using devalut.Interfaces;
+using devault.Interfaces;
 using BCrypt.Net;
 
-namespace devalut.Services;
+namespace devault.Services;
 
 public class BcryptService : IHasherService
 {

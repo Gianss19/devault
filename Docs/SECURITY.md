@@ -13,8 +13,8 @@ No user, request, network or device is trusted by default. Every request must be
 - ASP.NET Core JWT Bearer Authentication
 - Passwords hashed with BCrypt
 - Access Tokens signed using HS256 (HMAC SHA-256)
-- Short-lived Access Tokens
-- Refresh Token support planned
+- Short-lived Access Tokens (30 min)
+- Refresh Tokens con expiración de 7 días
 
 ---
 
@@ -115,12 +115,12 @@ Unexpected inputs are rejected.
 
 # Rate Limiting
 
-Planned protections:
+Política `PerUser` configurada:
 
-- Login Rate Limiting
-- Refresh Token Rate Limiting
-- Authenticated API Rate Limiting
-- Temporary account lockout
+- 10 solicitudes por ventana de 10 segundos
+- Cola de 2 en espera
+- Rechazo con `429 Too Many Requests`
+- Clave por `NameIdentifier` (autenticado) o IP (anónimo)
 
 ---
 
@@ -162,6 +162,7 @@ Production:
 - Multi-Factor Authentication
 - Envelope Encryption
 - Key Rotation
-- Security Headers
+- Security Headers (HSTS, CSP, X-Frame-Options)
 - Audit Dashboard
 - Device Management
+- Account lockout por intentos fallidos

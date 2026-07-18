@@ -2,13 +2,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Text;
-using devalut.Data.Configuration;
-using devalut.Interfaces;
-using devalut.Models;
+using devault.Data.Configuration;
+using devault.Interfaces;
+using devault.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace devalut.Services;
+namespace devault.Services;
 
 public class JwtService : ITokenService
 {

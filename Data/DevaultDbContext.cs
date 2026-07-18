@@ -1,7 +1,7 @@
-using devalut.Models;
+using devault.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace devalut.Entities.Persistance;
+namespace devault.Entities.Persistance;
 
 public class DevaultDbContext : DbContext
 {

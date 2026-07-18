@@ -1,4 +1,4 @@
-namespace devalut.Data.Configuration;
+namespace devault.Data.Configuration;
 
 public class JwtSettings
 {

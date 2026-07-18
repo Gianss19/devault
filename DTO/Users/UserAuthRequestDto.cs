@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
 
-namespace devalut.DTO.Users;
+namespace devault.DTO.Users;
 
 public record UserAuthRequestDto(string Email, string Password);

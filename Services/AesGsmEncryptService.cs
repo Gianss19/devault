@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.Xml;
 using System.Text;
-using devalut.Data.Configuration;
-using devalut.Interfaces;
+using devault.Data.Configuration;
+using devault.Interfaces;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Options;
 
-namespace devalut.Services;
+namespace devault.Services;
 
 public class AesGsmEncryptService : IEncryptService
 {

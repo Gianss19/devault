@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using devalut.DTO;
-using devalut.DTO.Users;
+using devault.DTO;
+using devault.DTO.Users;
 using Microsoft.AspNetCore.Mvc;
 
-namespace devalut.Controllers;
+namespace devault.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase

@@ -1,9 +1,9 @@
-namespace devalut.Models;
+namespace devault.Models;
 
 using System.Text.RegularExpressions;
 
-using devalut;
-using devalut.Models.Enums;
+using devault;
+using devault.Models.Enums;
 
 public class User
 {

@@ -1,3 +1,3 @@
-namespace devalut.DTO;
+namespace devault.DTO;
 
 public record UserRegisterDto(string Name, string Email, string Password);

@@ -1,8 +1,8 @@
-using devalut.DTO.Secrets;
+using devault.DTO.Secrets;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace devalut.Controllers;
+namespace devault.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
