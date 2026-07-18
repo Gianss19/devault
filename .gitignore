@@ -3,3 +3,16 @@ obj/
 *.user
 *.suo
 .vs/
+.idea/
+
+appsettings.Development.json
+appsettings.Production.json
+
+*.log
+*.cache
+*.swp
+*~
+
+.env
+
+node_modules/

@@ -23,11 +23,12 @@ Backend API para gestión de secretos cifrados con autenticación JWT.
 |---|---|
 | Runtime | .NET 10 |
 | Framework | ASP.NET Core |
-| Base de datos / Database | PostgreSQL |
+| Base de datos / Database | PostgreSQL 18 |
 | ORM | Entity Framework Core |
 | Autenticación / Auth | JWT Bearer (HS256) |
 | Cifrado / Encryption | AES-256-GCM |
 | Hash de contraseñas / Password hashing | BCrypt |
+| Contenedores / Containers | Docker + Docker Compose |
 | Testing Backend | xUnit + Moq + EF Core InMemory |
 | Testing Frontend | Custom HTML test runner |
 
@@ -35,9 +36,9 @@ Backend API para gestión de secretos cifrados con autenticación JWT.
 
 ## Requisitos Previos / Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- PostgreSQL en ejecución (puerto 5432) / PostgreSQL running on port 5432
-- User Secrets de .NET configurado / .NET User Secrets configured
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (solo para desarrollo local / only for local dev)
+- Docker y Docker Compose / Docker and Docker Compose
+- PostgreSQL 18 (incluido en docker compose / included in docker compose)
 
 ---
 
@@ -86,6 +87,45 @@ The API will be available at `http://localhost:5164`.
 
 ---
 
+## Docker
+
+### Iniciar con Docker Compose / Start with Docker Compose
+
+```bash
+docker compose up -d
+```
+
+Esto levanta PostgreSQL y la API en contenedores.
+This starts PostgreSQL and the API in containers.
+
+### Variables de entorno / Environment variables
+
+Crear un archivo `.env` en la raiz (no commitearlo):
+Create a `.env` file in the root (do not commit it):
+
+```env
+DB_PASSWORD=tu_password_seguro
+JWT_SECRET_KEY=tu_clave_secreta_minimo_32_caracteres
+MASTER_KEY=tu_master_key_secreta
+```
+
+Si no se crea `.env`, se usan los valores por defecto (no recomendado en produccion).
+If no `.env` file is created, default values are used (not recommended in production).
+
+### Comandos utiles / Useful commands
+
+```bash
+docker compose up -d              # Iniciar en background / Start in background
+docker compose down               # Detener y eliminar / Stop and remove
+docker compose logs -f api        # Ver logs de la API / View API logs
+docker compose down -v            # Detener y eliminar volumes (borra BD) / Stop and remove volumes (deletes DB)
+```
+
+La API estara en `http://localhost:5164` y PostgreSQL en `localhost:5432`.
+The API will be at `http://localhost:5164` and PostgreSQL at `localhost:5432`.
+
+---
+
 ## Estructura del Proyecto / Project Structure
 
 ```
@@ -103,6 +143,9 @@ devault/
 ├── Docs/                 # Documentación / Documentation
 ├── test/                 # Pruebas unitarias backend / Backend unit tests
 ├── frontend/             # UI para interactuar con la API (generada por IA)
+├── Dockerfile            # Imagen Docker multi-stage / Multi-stage Docker image
+├── docker-compose.yml    # Orquestacion de servicios / Service orchestration
+├── .dockerignore
 ├── Program.cs            # Punto de entrada / Entry point
 └── appsettings.json
 ```
