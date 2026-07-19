@@ -28,9 +28,9 @@ Receive HTTP requests, validate input with DTOs, delegate logic to services, and
 
 | Controller | Responsabilidad / Responsibility |
 |---|---|
-| `AuthController` | Registro, login y logout de usuarios / User registration, login, logout |
-| `SecretsController` | CRUD de secretos cifrados / Encrypted secrets CRUD |
-| `UsersController` | Gestión de usuarios (admin) y perfil propio / User management (admin) and own profile |
+| `AuthController` | Registro, login, logout y registro admin / User registration, login, logout, admin registration |
+| `SecretsController` | CRUD de secretos cifrados + revelar y actualizar / Encrypted secrets CRUD + reveal and update |
+| `UsersController` | Gestión de usuarios (admin), perfil propio y cambio de credenciales / User management (admin), own profile and credential changes |
 
 ### Services
 
@@ -63,12 +63,15 @@ Data Transfer Objects for validation and data transfer between layers.
 | DTO | Uso / Use |
 |---|---|
 | `UserRegisterDto` | Registro de usuario / User registration |
+| `AdminRegisterDto` | Registro de admin / Admin registration |
 | `UserAuthRequestDto` | Credenciales de login / Login credentials |
 | `UserResponseDto` | Respuesta con datos del usuario (sin hash) / User data response (no hash) |
 | `ChangeNameUserDto` | Cambio de nombre / Name change |
 | `ChangePasswordDto` | Cambio de contraseña / Password change |
 | `SecretRequestDto` | Creación de secreto / Secret creation |
 | `SecretResponseDto` | Respuesta de secreto (metadata, sin valor cifrado) / Secret response (metadata, no encrypted value) |
+| `SecretDetailResponseDto` | Respuesta con secreto descifrado / Response with decrypted secret |
+| `SecretUpdateDto` | Actualización de secreto / Secret update |
 | `TokenResponseDto` | Respuesta de autenticación con tokens / Auth response with tokens |
 | `RefreshTokenRequestDto` | Solicitud con refresh token / Request with refresh token |
 

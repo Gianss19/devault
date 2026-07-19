@@ -17,6 +17,8 @@ No user, request, network, or device is trusted by default. Every request must b
 - Access Tokens firmados con HS256 (HMAC SHA-256) / Access Tokens signed with HS256
 - Access Tokens de corta duración (30 min) / Short-lived Access Tokens (30 min)
 - Refresh Tokens con expiración de 7 días / Refresh Tokens with 7-day expiration
+- Refresh Token Rotation: al usar un refresh token, se revoca el anterior / Refresh Token Rotation: using a refresh token revokes the previous one
+- Audience validation habilitada en JWT / Audience validation enabled on JWT
 
 ---
 
@@ -117,7 +119,7 @@ HSTS is enabled in production.
 Valores sensibles almacenados / Sensitive values stored:
 - Secretos cifrados / Encrypted secrets
 - Hashes de contraseñas / Password hashes
-- Refresh tokens (almacenados en texto, hash planeado) / Refresh tokens (stored plaintext, hashing planned)
+- Refresh tokens (almacenados como hash SHA256) / Refresh tokens (stored as SHA256 hash)
 
 No se almacenan credenciales en texto plano.
 No plaintext credentials are stored.
@@ -146,6 +148,13 @@ Política `PerUser` configurada:
 - Cola de 2 en espera / Queue of 2
 - Rechazo con `429 Too Many Requests` / Rejected with `429 Too Many Requests`
 - Clave por `NameIdentifier` (autenticado) o IP (anónimo) / Keyed by `NameIdentifier` (authenticated) or IP (anonymous)
+
+Política `Login` configurada:
+`Login` policy configured:
+
+- 5 solicitudes por minuto por IP / 5 requests per minute per IP
+- Sin cola / No queue
+- Aplicada solo al endpoint `/api/Auth/login` / Applied only to `/api/Auth/login` endpoint
 
 ---
 
@@ -178,8 +187,8 @@ Producción / Production:
 
 ## Testing de Seguridad / Security Testing
 
-79 pruebas unitarias cubren modelos, servicios y controllers.
-79 unit tests cover models, services, and controllers.
+96 pruebas unitarias cubren modelos, servicios y controllers.
+96 unit tests cover models, services, and controllers.
 
 Pruebas de frontend verifican:
 Frontend tests verify:
@@ -193,12 +202,9 @@ Frontend tests verify:
 
 ## Mejoras Futuras / Future Improvements
 
-- Rotación de Refresh Tokens / Refresh Token Rotation
 - Autenticación Multi-Factor / Multi-Factor Authentication
 - Envelope Encryption
 - Rotación de claves / Key Rotation
 - Dashboard de auditoría / Audit Dashboard
 - Gestión de dispositivos / Device Management
 - Bloqueo de cuenta por intentos fallidos / Account lockout on failed attempts
-- Hash de refresh tokens / Refresh token hashing
-- Endpoint de refresh token / Refresh token endpoint

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using devault.Entities.Persistance;
 using devault.Interfaces;
 using devault.Models;
@@ -21,9 +22,11 @@ public class RefreshTokenService : IRefreshTokenService
     public RefreshToken Create(Guid userId)
     {
         var token = GenerateToken();
+        var tokenHash = HashToken(token);
 
         var refreshToken = new RefreshToken(
             userId,
+            tokenHash,
             token,
             _expirationTime
         );
@@ -36,9 +39,10 @@ public class RefreshTokenService : IRefreshTokenService
 
     public RefreshToken? GetByToken(string token)
     {
+        var tokenHash = HashToken(token);
         return _context.RefreshTokens
             .Include(r => r.User)
-            .FirstOrDefault(r => r.Token == token);
+            .FirstOrDefault(r => r.Token == tokenHash);
     }
 
 
@@ -58,6 +62,12 @@ public class RefreshTokenService : IRefreshTokenService
     {
         var bytes = RandomNumberGenerator.GetBytes(64);
 
+        return Convert.ToBase64String(bytes);
+    }
+
+    private static string HashToken(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         return Convert.ToBase64String(bytes);
     }
 }

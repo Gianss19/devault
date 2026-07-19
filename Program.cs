@@ -1,12 +1,15 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using devault;
 using devault.Data.Configuration;
 using devault.Entities.Persistance;
 using devault.Interfaces;
+using devault.Models;
 using devault.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
@@ -15,7 +18,10 @@ using devault.Models.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(o =>
+{
+    o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<DevaultDbContext>(options =>
@@ -25,6 +31,7 @@ builder.Services.AddDbContext<DevaultDbContext>(options =>
 
 builder.Services.Configure<CryptoSettings>(builder.Configuration.GetSection("CryptoSettings"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection("AdminSeed"));
 
 builder.Services.AddSingleton<IEncryptService, AesGsmEncryptService>();
 builder.Services.AddScoped<ITokenService, JwtService>();
@@ -37,8 +44,15 @@ builder.Services.AddCors(options =>
     {
         policy.SetIsOriginAllowed(origin =>
               {
-                  if (string.IsNullOrEmpty(origin)) return true;
-                  if (origin == "null") return true;
+                  if (builder.Environment.IsDevelopment())
+                  {
+                      if (string.IsNullOrEmpty(origin)) return true;
+                      if (origin == "null") return true;
+                  }
+                  else
+                  {
+                      if (string.IsNullOrEmpty(origin)) return false;
+                  }
                   try
                   {
                       var uri = new Uri(origin);
@@ -67,7 +81,8 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidateIssuer = true,
         ValidateLifetime = true,
-        ValidateAudience = false
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Jwt:Audience"]
     };
 });
 
@@ -90,6 +105,20 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromSeconds(10),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 2
+            });
+    });
+
+    options.AddPolicy("Login", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ip,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
             });
     });
 });
@@ -161,6 +190,49 @@ app.MapHealthChecks("/health");
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<DevaultDbContext>();
+    var hasher = services.GetRequiredService<IHasherService>();
+    var seedSettings = services.GetRequiredService<IOptions<AdminSeedSettings>>().Value;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    await context.Database.MigrateAsync();
+
+    logger.LogInformation("AdminSeed: Email='{Email}', Name='{Name}'", seedSettings.Email, seedSettings.Name);
+
+    var hasAdmin = await context.Users.AnyAsync(u => u.Rol == Roles.Admin);
+    logger.LogInformation("AdminSeed: hasAdmin={HasAdmin}", hasAdmin);
+
+    if (!hasAdmin && !string.IsNullOrWhiteSpace(seedSettings.Email))
+    {
+        var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Email == seedSettings.Email);
+        if (existingUser != null)
+        {
+            logger.LogInformation("AdminSeed: Promoting existing user '{Email}' to Admin", seedSettings.Email);
+            existingUser.ChangeRole(Roles.Admin);
+        }
+        else
+        {
+            logger.LogInformation("AdminSeed: Creating new admin user '{Email}'", seedSettings.Email);
+            var passwordHash = hasher.GenerateHash(seedSettings.Password);
+            var admin = new User(seedSettings.Name, seedSettings.Email, passwordHash, Roles.Admin);
+            context.Users.Add(admin);
+        }
+        await context.SaveChangesAsync();
+        logger.LogInformation("AdminSeed: Saved changes to database");
+    }
+    else if (hasAdmin)
+    {
+        logger.LogInformation("AdminSeed: Admin already exists, skipping seed");
+    }
+    else
+    {
+        logger.LogWarning("AdminSeed: Email is empty, skipping seed");
+    }
 }
 
 app.Run();

@@ -27,7 +27,7 @@ public class User
 
     private User() { }
 
-    public User(string name, string email, string passwordHash)
+    public User(string name, string email, string passwordHash, Roles role = Roles.User)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new EntityException("Nombre inválido.");
@@ -53,7 +53,7 @@ public class User
         Name = name;
         Email = email;
         PasswordHash = passwordHash;
-        Rol = Roles.User;
+        Rol = role;
         CreatedAt = DateTime.UtcNow;
     }
 

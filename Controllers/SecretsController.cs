@@ -77,6 +77,68 @@ public class SecretsController : ControllerBase
         return Ok(new SecretResponseDto(secret.Id, secret.Name, secret.CreatedAt));
     }
 
+    [HttpGet]
+    [Authorize(Roles = "User, Admin")]
+    [Route("{id:guid}/reveal")]
+    public async Task<ActionResult<SecretResponseDto>> RevealSecret(Guid id)
+    {
+        if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out Guid userId))
+            return Unauthorized("Token inválido.");
+
+        var secret = await _context.Secrets.FindAsync(id);
+
+        if (secret == null || secret.UserId != userId)
+            return NotFound();
+
+        string decryptedValue;
+        try
+        {
+            decryptedValue = _encryptService.Decrypt(secret.EncryptedValue);
+        }
+        catch
+        {
+            return BadRequest("Error al descifrar el secreto.");
+        }
+
+        return Ok(new SecretDetailResponseDto(secret.Id, secret.Name, decryptedValue, secret.CreatedAt));
+    }
+
+    [HttpPut]
+    [Authorize(Roles = "User, Admin")]
+    [Route("{id:guid}")]
+    public async Task<ActionResult> UpdateSecret(Guid id, [FromBody] SecretUpdateDto update)
+    {
+        if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out Guid userId))
+            return Unauthorized("Token inválido.");
+
+        var secret = await _context.Secrets.FindAsync(id);
+
+        if (secret == null || secret.UserId != userId)
+            return NotFound();
+
+        if (!string.IsNullOrWhiteSpace(update.Name) && !string.IsNullOrWhiteSpace(update.Value))
+        {
+            secret.ChangeName(update.Name);
+            secret.ChangeEncryptedValue(_encryptService.Encrypt(update.Value));
+        }
+        else if (!string.IsNullOrWhiteSpace(update.Name))
+        {
+            secret.ChangeName(update.Name);
+        }
+        else if (!string.IsNullOrWhiteSpace(update.Value))
+        {
+            secret.ChangeEncryptedValue(_encryptService.Encrypt(update.Value));
+        }
+        else
+        {
+            return BadRequest("Se debe proporcionar nombre o valor.");
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
     [HttpDelete]
     [Authorize(Roles = "User, Admin")]
     [Route("{id:guid}")]

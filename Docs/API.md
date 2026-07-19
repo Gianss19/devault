@@ -54,6 +54,50 @@ POST /api/Auth/signup
 
 ---
 
+### Registrar Admin / Register Admin (Admin only)
+
+```
+POST /api/Auth/register-admin
+```
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Body:**
+
+```json
+{
+  "name": "string",
+  "email": "string",
+  "password": "string"
+}
+```
+
+| Campo / Field | Tipo / Type | Requisitos / Requirements |
+|---|---|---|
+| `name` | string | 3-100 caracteres / characters |
+| `email` | string | Formato válido, único / Valid format, unique |
+| `password` | string | 8+ chars, 1 uppercase, 1 lowercase, 1 digit, 1 special |
+
+**Requiere rol / Requires role:** `Admin`
+
+**Respuesta exitosa / Success:** `200 OK`
+
+```json
+{
+  "id": "guid",
+  "name": "string",
+  "email": "string"
+}
+```
+
+**Errores / Errors:**
+- `400` - "User is null" / "User already exists" / "Contraseña No segura."
+
+---
+
 ### Iniciar Sesión / Login
 
 ```
@@ -99,7 +143,7 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "token": "string (refresh token)"
+  "refreshToken": "string"
 }
 ```
 
@@ -107,6 +151,42 @@ Authorization: Bearer <token>
 
 **Errores / Errors:**
 - `400` - "Token inválido o ya revocado."
+
+---
+
+### Refrescar Token / Refresh Token
+
+```
+POST /api/Auth/refresh
+```
+
+**Body:**
+
+```json
+{
+  "refreshToken": "string"
+}
+```
+
+| Campo / Field | Tipo / Type | Descripción / Description |
+|---|---|---|
+| `refreshToken` | string | Refresh token válido y no revocado / Valid, non-revoked refresh token |
+
+**Respuesta exitosa / Success:** `200 OK`
+
+```json
+{
+  "accessToken": "string (JWT)",
+  "refreshToken": "string (nuevo / new)",
+  "expiresAt": "datetime"
+}
+```
+
+> **Nota / Note:** Al usar un refresh token, se revoca el anterior (rotación). El nuevo refresh token debe guardarse para futuras renovaciones.
+> Using a refresh token revokes the previous one (rotation). The new refresh token must be saved for future renewals.
+
+**Errores / Errors:**
+- `401` - "Refresh token inválido o expirado." / "Usuario no encontrado."
 
 ---
 
@@ -207,6 +287,79 @@ Authorization: Bearer <token>
 
 ---
 
+### Revelar Secreto / Reveal Secret
+
+```
+GET /api/Secrets/{id:guid}/reveal
+```
+
+| Parámetro / Param | Tipo / Type | Descripción / Description |
+|---|---|---|
+| `id` | guid | ID del secreto / Secret ID |
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Respuesta:** `200 OK`
+
+```json
+{
+  "id": "guid",
+  "name": "string",
+  "value": "string (descifrado / decrypted)",
+  "createdAt": "datetime"
+}
+```
+
+**Errores / Errors:**
+- `404` - Secreto no encontrado o no pertenece al usuario
+- `400` - Error al descifrar el secreto
+
+---
+
+### Actualizar Secreto / Update Secret
+
+```
+PUT /api/Secrets/{id:guid}
+```
+
+| Parámetro / Param | Tipo / Type | Descripción / Description |
+|---|---|---|
+| `id` | guid | ID del secreto / Secret ID |
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Body:**
+
+```json
+{
+  "name": "string (opcional / optional)",
+  "value": "string (opcional / optional)"
+}
+```
+
+| Campo / Field | Tipo / Type | Requisitos / Requirements |
+|---|---|---|
+| `name` | string? | 3-100 caracteres / characters |
+| `value` | string? | Texto plano del secreto / Secret plaintext |
+
+Al menos uno de los campos debe ser proporcionado.
+At least one field must be provided.
+
+**Respuesta exitosa / Success:** `200 OK`
+
+**Errores / Errors:**
+- `400` - "Se debe proporcionar nombre o valor." / "El nombre debe tener entre 3 y 100 caracteres."
+- `404` - Secreto no encontrado o no pertenece al usuario
+
+---
+
 ### Eliminar Secreto / Delete Secret
 
 ```
@@ -230,6 +383,35 @@ Authorization: Bearer <token>
 ---
 
 ## Users
+
+### Obtener Mi Perfil / Get My Profile
+
+```
+GET /api/Users/me
+```
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Requiere rol / Requires role:** `User` or `Admin`
+
+**Respuesta:** `200 OK`
+
+```json
+{
+  "id": "guid",
+  "name": "string",
+  "email": "string"
+}
+```
+
+**Errores / Errors:**
+- `404` - "Usuario no encontrado."
+- `401` - "Token inválido."
+
+---
 
 ### Listar Todos los Usuarios / List All Users (Admin)
 
@@ -340,6 +522,11 @@ DELETE /api/Users/{id:guid}
 |---|---|---|
 | `PerUser` | 10 solicitudes / requests | 10 segundos / seconds |
 | Cola / Queue | 2 en espera / queued | - |
+| `Login` | 5 solicitudes / requests | 1 minuto / minute |
+| Cola / Queue | 0 / none | - |
+
+La política `Login` se aplica solo al endpoint `POST /api/Auth/login`.
+The `Login` policy applies only to the `POST /api/Auth/login` endpoint.
 
 Al superar el límite se retorna `429 Too Many Requests`.
 When the limit is exceeded, `429 Too Many Requests` is returned.

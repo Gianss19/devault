@@ -7,6 +7,7 @@ using devault.DTO.Users;
 using devault.Entities.Persistance;
 using devault.Interfaces;
 using devault.Models;
+using devault.Models.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -39,11 +40,26 @@ public class AuthControllerTests
 
         var refreshTokenServiceMock = new Mock<IRefreshTokenService>();
         refreshTokenServiceMock.Setup(s => s.Create(It.IsAny<Guid>()))
-            .Returns((Guid userId) => new RefreshToken(userId, "test_refresh_token", TimeSpan.FromDays(7)));
+            .Returns((Guid userId) => new RefreshToken(userId, "test_refresh_token_hash", "test_refresh_token", TimeSpan.FromDays(7)));
         refreshTokenServiceMock.Setup(s => s.GetByToken(It.IsAny<string>()))
             .Returns((string token) => _context.RefreshTokens.FirstOrDefault(t => t.Token == token));
 
         _controller = new AuthController(_context, jwtService, refreshTokenServiceMock.Object, bcryptService);
+    }
+
+    private void SetAdminUser()
+    {
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, "Admin")
+                }))
+            }
+        };
     }
 
     [Fact]
@@ -91,6 +107,51 @@ public class AuthControllerTests
         var dto = new UserRegisterDto("DuplicateName", "second@example.com", "Test@1234");
 
         var result = await _controller.Register(dto);
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("User already exists", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task RegisterAdmin_WithValidData_ReturnsOkWithAdminRole()
+    {
+        SetAdminUser();
+
+        var dto = new AdminRegisterDto("NewAdmin", "admin@example.com", "Admin@1234");
+
+        var result = await _controller.RegisterAdmin(dto);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<UserResponseDto>(okResult.Value);
+        Assert.Equal("NewAdmin", response.Name);
+
+        var createdUser = await _context.Users.FindAsync(response.id);
+        Assert.NotNull(createdUser);
+        Assert.Equal(Roles.Admin, createdUser!.Rol);
+    }
+
+    [Fact]
+    public async Task RegisterAdmin_WithNullUser_ReturnsBadRequest()
+    {
+        SetAdminUser();
+
+        var result = await _controller.RegisterAdmin(null);
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("User is null", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task RegisterAdmin_WithDuplicateEmail_ReturnsBadRequest()
+    {
+        SetAdminUser();
+
+        _context.Users.Add(new User("ExistingUser", "admin@example.com", "hash"));
+        await _context.SaveChangesAsync();
+
+        var dto = new AdminRegisterDto("NewAdmin", "admin@example.com", "Admin@1234");
+
+        var result = await _controller.RegisterAdmin(dto);
 
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("User already exists", badRequestResult.Value);
@@ -158,7 +219,7 @@ public class AuthControllerTests
     public async Task Logout_WithValidToken_RevokesToken()
     {
         var refreshTokenServiceMock = new Mock<IRefreshTokenService>();
-        var refresh = new RefreshToken(Guid.NewGuid(), "valid_token", TimeSpan.FromDays(7));
+        var refresh = new RefreshToken(Guid.NewGuid(), "valid_token_hash", "valid_token", TimeSpan.FromDays(7));
         refreshTokenServiceMock.Setup(s => s.GetByToken("valid_token")).Returns(refresh);
 
         var jwtService = new devault.Services.JwtService(

@@ -109,8 +109,8 @@ JWT_SECRET_KEY=tu_clave_secreta_minimo_32_caracteres
 MASTER_KEY=tu_master_key_secreta
 ```
 
-Si no se crea `.env`, se usan los valores por defecto (no recomendado en produccion).
-If no `.env` file is created, default values are used (not recommended in production).
+Si no se crea `.env`, docker compose no arrancará hasta que se configuren las variables.
+If no `.env` file is created, docker compose will not start until the variables are configured.
 
 ### Comandos utiles / Useful commands
 
@@ -158,11 +158,16 @@ devault/
 |---|---|---|---|
 | `POST` | `/api/Auth/signup` | Registrar usuario / Register user | No |
 | `POST` | `/api/Auth/login` | Iniciar sesión / Login | No |
+| `POST` | `/api/Auth/refresh` | Refrescar token / Refresh token | No |
 | `POST` | `/api/Auth/logout` | Cerrar sesión / Logout | Sí / Yes |
+| `POST` | `/api/Auth/register-admin` | Registrar admin / Register admin | Admin |
 | `POST` | `/api/Secrets/create` | Crear secreto / Create secret | Sí / Yes |
 | `GET` | `/api/Secrets/all` | Listar secretos / List secrets | Sí / Yes |
 | `GET` | `/api/Secrets/{id}` | Obtener secreto / Get secret | Sí / Yes |
+| `GET` | `/api/Secrets/{id}/reveal` | Revelar secreto / Reveal secret | Sí / Yes |
+| `PUT` | `/api/Secrets/{id}` | Actualizar secreto / Update secret | Sí / Yes |
 | `DELETE` | `/api/Secrets/{id}` | Eliminar secreto / Delete secret | Sí / Yes |
+| `GET` | `/api/Users/me` | Mi perfil / My profile | Sí / Yes |
 | `GET` | `/api/Users/all` | Listar usuarios / List users | Admin |
 | `POST` | `/api/Users/change-name` | Cambiar nombre / Change name | Sí / Yes |
 | `POST` | `/api/Users/change-password` | Cambiar contraseña / Change password | Sí / Yes |
@@ -181,8 +186,8 @@ cd test
 dotnet test
 ```
 
-79 pruebas cubriendo modelos, servicios y controllers.
-79 tests covering models, services, and controllers.
+96 pruebas cubriendo modelos, servicios y controllers.
+96 tests covering models, services, and controllers.
 
 ### Frontend
 
@@ -199,10 +204,10 @@ Open `frontend/test/test-runner.html` in a browser (via HTTP server).
   *Secrets encrypted with AES-256-GCM (nonce + tag + ciphertext)*
 - Tokens JWT de corta duración (30 min)
   *Short-lived JWT tokens (30 min)*
-- Refresh tokens con expiración de 7 días
-  *Refresh tokens with 7-day expiration*
-- Rate limiting por usuario (10 req / 10 seg)
-  *Per-user rate limiting (10 req / 10 sec)*
+- Refresh tokens con expiración de 7 días y rotación automática
+  *Refresh tokens with 7-day expiration and automatic rotation*
+- Rate limiting por usuario (10 req / 10 seg) + rate limiting en login (5 req / min)
+  *Per-user rate limiting (10 req / 10 sec) + login rate limiting (5 req / min)*
 - Headers de seguridad (CSP, X-Frame-Options, nosniff)
   *Security headers (CSP, X-Frame-Options, nosniff)*
 - HTTPS en producción / HTTPS in production

@@ -5,8 +5,10 @@ using devault.DTO.Users;
 using devault.Entities.Persistance;
 using devault.Interfaces;
 using devault.Models;
+using devault.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace devault.Controllers;
@@ -49,12 +51,33 @@ public class AuthController : ControllerBase
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
 
-        return Ok(new UserResponseDto(newUser.Id, newUser.Name, newUser.Email));
+        return Ok(new UserResponseDto(newUser.Id, newUser.Name, newUser.Email, newUser.Rol));
+    }
+
+    [HttpPost]
+    [Route("register-admin")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<UserResponseDto>> RegisterAdmin([FromBody] AdminRegisterDto user)
+    {
+        if (user == null)
+            return BadRequest("User is null");
+
+        if (await _context.Users.AnyAsync(u => u.Email == user.Email || u.Name == user.Name))
+            return BadRequest("User already exists");
+
+        var passwordHash = _bcryptService.GenerateHash(user.Password);
+        User newUser = new(user.Name, user.Email, passwordHash, Roles.Admin);
+
+        _context.Users.Add(newUser);
+        await _context.SaveChangesAsync();
+
+        return Ok(new UserResponseDto(newUser.Id, newUser.Name, newUser.Email, newUser.Rol));
     }
 
     [HttpPost]
     [Route("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("Login")]
     public async Task<ActionResult<TokenResponseDto>> Login([FromBody] UserAuthRequestDto user)
     {
         if (string.IsNullOrWhiteSpace(user.Password))
@@ -73,15 +96,37 @@ public class AuthController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(new TokenResponseDto(accessToken, refreshToken.Token, refreshToken.ExpiresAt));
+        return Ok(new TokenResponseDto(accessToken, refreshToken.PlainTextToken, refreshToken.ExpiresAt));
+    }
+
+    [HttpPost]
+    [Route("refresh")]
+    [AllowAnonymous]
+    public async Task<ActionResult<TokenResponseDto>> Refresh([FromBody] RefreshTokenRequestDto request)
+    {
+        var refreshToken = _refreshTokenService.GetByToken(request.RefreshToken);
+        if (refreshToken == null || !refreshToken.IsActive)
+            return Unauthorized("Refresh token inválido o expirado.");
+
+        var user = await _context.Users.FindAsync(refreshToken.UserId);
+        if (user == null)
+            return Unauthorized("Usuario no encontrado.");
+
+        _refreshTokenService.Revoke(refreshToken);
+        var newAccessToken = _jwtService.GenerateAccessToken(user);
+        var newRefreshToken = _refreshTokenService.Create(user.Id);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new TokenResponseDto(newAccessToken, newRefreshToken.PlainTextToken, newRefreshToken.ExpiresAt));
     }
 
     [HttpPost]
     [Route("logout")]
-    [Authorize]
+    [Authorize(Roles = "User, Admin")]
     public async Task<ActionResult> Logout([FromBody] RefreshTokenRequestDto request)
     {
-        var refreshToken = _refreshTokenService.GetByToken(request.Token);
+        var refreshToken = _refreshTokenService.GetByToken(request.RefreshToken);
         if (refreshToken == null || !refreshToken.IsActive)
             return BadRequest("Token inválido o ya revocado.");
 

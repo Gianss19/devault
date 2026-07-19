@@ -1,6 +1,8 @@
 using devault.Entities.Persistance;
 using devault.Models;
+using devault.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace devault.Entities.Configuration;
@@ -28,7 +30,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .IsRequired();
 
         builder.Property(u => u.Rol)
-               .HasConversion<string>()
+               .HasConversion(new ValueConverter<Roles, string>(
+                   v => v.ToString(),
+                   v => ParseRole(v)
+               ))
                .HasMaxLength(20)
                .IsRequired();
 
@@ -46,5 +51,16 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .WithOne(r => r.User)
                .HasForeignKey(r => r.UserId)
                .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static Roles ParseRole(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Roles.User;
+
+        if (Enum.TryParse<Roles>(value, ignoreCase: true, out var result))
+            return result;
+
+        return Roles.User;
     }
 }

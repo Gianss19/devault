@@ -201,4 +201,49 @@ public class UsersControllerTests
 
         Assert.IsType<NotFoundResult>(result);
     }
+
+    [Fact]
+    public async Task GetProfile_ReturnsCurrentUser()
+    {
+        var user = new User("ProfileUser", "profile@example.com", "hash");
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+                }))
+            }
+        };
+
+        var result = await _controller.GetProfile();
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<UserResponseDto>(okResult.Value);
+        Assert.Equal("ProfileUser", response.Name);
+        Assert.Equal("profile@example.com", response.Email);
+    }
+
+    [Fact]
+    public async Task GetProfile_WithInvalidUserId_ReturnsNotFound()
+    {
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())
+                }))
+            }
+        };
+
+        var result = await _controller.GetProfile();
+
+        Assert.IsType<NotFoundObjectResult>(result.Result);
+    }
 }

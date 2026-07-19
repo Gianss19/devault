@@ -73,6 +73,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
   transition: background .15s, color .15s;
 }
 
+.nav-btn.hidden { display: none; }
+
 .nav-btn:hover { background: var(--bg-input); color: var(--text); }
 .nav-btn.active { background: var(--primary); color: #fff; }
 
@@ -245,6 +247,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
 .card-meta { color: var(--text-dim); font-size: .82rem; margin-top: .3rem; }
 .card-id { color: var(--text-dim); font-size: .75rem; margin-top: .25rem; word-break: break-all; }
 .card-actions { margin-top: .75rem; display: flex; gap: .5rem; }
+
+.secret-value-container { margin-top: .5rem; }
+.secret-value-hidden { color: var(--text-dim); font-style: italic; }
+.secret-value-revealed { color: var(--success); word-break: break-all; font-family: 'Consolas', 'Courier New', monospace; font-size: .85rem; }
+.secret-value-error { color: var(--error); }
 
 .empty-state { color: var(--text-dim); text-align: center; padding: 2rem 0; }
 .loading { color: var(--text-dim); text-align: center; padding: 1rem 0; }

@@ -31,8 +31,25 @@ public class Secret
         UserId = userId;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = null;
+    }
 
-        
+    public void ChangeName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new EntityException("Nombre inválido.");
+        name = name.Trim();
+        if (name.Length < 3 || name.Length > 100)
+            throw new EntityException("El nombre debe tener entre 3 y 100 caracteres.");
+        Name = name;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void ChangeEncryptedValue(string encryptedValue)
+    {
+        if (string.IsNullOrWhiteSpace(encryptedValue))
+            throw new EntityException("Valor cifrado inválido.");
+        EncryptedValue = encryptedValue.Trim();
+        UpdatedAt = DateTime.UtcNow;
     }
 
 }

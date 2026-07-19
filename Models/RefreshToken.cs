@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore.Storage.Internal;
 
 namespace devault.Models;
@@ -10,6 +11,9 @@ public class RefreshToken
 
     public string Token { get; private set; } = null!;
 
+    [NotMapped]
+    public string PlainTextToken { get; private set; } = null!;
+
     public DateTime CreatedAt { get; private set; }
 
     public DateTime ExpiresAt { get; private set; }
@@ -20,17 +24,18 @@ public class RefreshToken
 
     private RefreshToken() { }
 
-    public RefreshToken(Guid userId, string token, TimeSpan lifetime)
+    public RefreshToken(Guid userId, string tokenHash, string plainTextToken, TimeSpan lifetime)
     {
         if (userId == Guid.Empty)
             throw new EntityException("Usuario inválido.");
 
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrWhiteSpace(tokenHash))
             throw new EntityException("Token inválido.");
 
         Id = Guid.NewGuid();
         UserId = userId;
-        Token = token;
+        Token = tokenHash;
+        PlainTextToken = plainTextToken;
         CreatedAt = DateTime.UtcNow;
         ExpiresAt = CreatedAt.Add(lifetime);
     }

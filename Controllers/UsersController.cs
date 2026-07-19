@@ -28,10 +28,25 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<UserResponseDto>>> GetAllUsers()
     {
         var listUsers = await _context.Users
-            .Select(u => new UserResponseDto(u.Id, u.Name, u.Email))
+            .Select(u => new UserResponseDto(u.Id, u.Name, u.Email, u.Rol))
             .ToListAsync();
 
         return Ok(listUsers);
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "User, Admin")]
+    [Route("me")]
+    public async Task<ActionResult<UserResponseDto>> GetProfile()
+    {
+        if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out Guid userId))
+            return Unauthorized("Token inválido.");
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return NotFound("Usuario no encontrado.");
+
+        return Ok(new UserResponseDto(user.Id, user.Name, user.Email, user.Rol));
     }
 
     [HttpPost]

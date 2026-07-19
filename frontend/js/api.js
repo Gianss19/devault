@@ -75,7 +75,7 @@ const API = (() => {
   }
 
   function logout() {
-    return request('POST', '/api/Auth/logout', { token: _refreshToken }, true);
+    return request('POST', '/api/Auth/logout', { refreshToken: _refreshToken }, true);
   }
 
   function createSecret(name, value) {
@@ -90,12 +90,27 @@ const API = (() => {
     return request('GET', '/api/Secrets/' + encodeURIComponent(id), null, true);
   }
 
+  function revealSecret(id) {
+    return request('GET', '/api/Secrets/' + encodeURIComponent(id) + '/reveal', null, true);
+  }
+
+  function updateSecret(id, name, value) {
+    const body = {};
+    if (name !== undefined && name !== null) body.name = name;
+    if (value !== undefined && value !== null) body.value = value;
+    return request('PUT', '/api/Secrets/' + encodeURIComponent(id), body, true);
+  }
+
   function deleteSecret(id) {
     return request('DELETE', '/api/Secrets/' + encodeURIComponent(id), null, true);
   }
 
   function getAllUsers() {
     return request('GET', '/api/Users/all', null, true);
+  }
+
+  function getProfile() {
+    return request('GET', '/api/Users/me', null, true);
   }
 
   function changeName(newName) {
@@ -125,8 +140,11 @@ const API = (() => {
     createSecret,
     getAllSecrets,
     getSecretById,
+    revealSecret,
+    updateSecret,
     deleteSecret,
     getAllUsers,
+    getProfile,
     changeName,
     changePassword,
     deleteUser,

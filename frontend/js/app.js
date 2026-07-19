@@ -57,7 +57,9 @@ const App = (() => {
 
     Utils.$('#app-bar')?.classList.remove('hidden');
     Utils.$('#auth-sections')?.classList.add('hidden');
+
     _updateUserInfo();
+    _updateNavVisibility();
 
     const navMap = {
       secrets: '#nav-secrets',
@@ -99,8 +101,24 @@ const App = (() => {
   function _updateUserInfo() {
     const user = Auth.getUser();
     const el = Utils.$('#user-info');
-    if (el && user) {
-      el.textContent = user.name + ' (' + Auth.getRole() + ')';
+    if (!el) return;
+    if (user && user.name) {
+      el.textContent = user.name + ' (' + (Auth.getRole() || 'User') + ')';
+    } else if (user) {
+      el.textContent = user.email || 'Usuario';
+    } else {
+      el.textContent = '';
+    }
+  }
+
+  function _updateNavVisibility() {
+    const navUsers = Utils.$('#nav-users');
+    if (navUsers) {
+      if (Auth.isAdmin()) {
+        navUsers.classList.remove('hidden');
+      } else {
+        navUsers.classList.add('hidden');
+      }
     }
   }
 
@@ -124,6 +142,9 @@ const App = (() => {
     const form = Utils.createElement('form', { className: 'auth-form', id: 'login-form' });
     const title = Utils.createElement('h2', { textContent: 'Iniciar Sesion' });
     form.appendChild(title);
+
+    const msgDiv = Utils.createElement('div', { id: 'login-msg' });
+    form.appendChild(msgDiv);
 
     form.appendChild(_createInput('login-email', 'email', 'Correo electronico', true));
     form.appendChild(_createInput('login-password', 'password', 'Contrasena', true));
@@ -171,7 +192,8 @@ const App = (() => {
         showView('secrets');
         Utils.setMessage('#global-message', 'Bienvenido, ' + Auth.getUser().name + '!', 'success');
       } else {
-        Utils.setMessage('#login-msg', res.data || 'Credenciales invalidas.', 'error');
+        const msg = typeof res.data === 'string' ? res.data : (res.data?.error || 'Credenciales invalidas.');
+        Utils.setMessage('#login-msg', msg, 'error');
       }
     } catch (err) {
       Utils.setMessage('#login-msg', 'Error de conexion con el servidor.', 'error');
@@ -189,6 +211,9 @@ const App = (() => {
     const form = Utils.createElement('form', { className: 'auth-form', id: 'signup-form' });
     const title = Utils.createElement('h2', { textContent: 'Crear Cuenta' });
     form.appendChild(title);
+
+    const msgDiv = Utils.createElement('div', { id: 'signup-msg' });
+    form.appendChild(msgDiv);
 
     form.appendChild(_createInput('signup-name', 'text', 'Nombre (3-100 caracteres)', true));
     form.appendChild(_createInput('signup-email', 'email', 'Correo electronico', true));
@@ -299,6 +324,9 @@ const App = (() => {
       const createFormContainer = Utils.createElement('div', { id: 'create-secret-form-container' });
       container.appendChild(createFormContainer);
 
+      const msgContainer = Utils.createElement('div', { id: 'secrets-msg' });
+      container.appendChild(msgContainer);
+
       if (secrets.length === 0) {
         container.appendChild(Utils.createElement('p', { className: 'empty-state', textContent: 'No tienes secretos aun.' }));
         return;
@@ -329,7 +357,26 @@ const App = (() => {
     const idEl = Utils.createElement('p', { className: 'card-id', textContent: 'ID: ' + secret.id });
     card.appendChild(idEl);
 
+    const valueContainer = Utils.createElement('div', { className: 'secret-value-container' });
+    const valueEl = Utils.createElement('p', { className: 'card-meta secret-value-hidden', textContent: 'Valor: Oculto' });
+    valueContainer.appendChild(valueEl);
+    card.appendChild(valueContainer);
+
     const actions = Utils.createElement('div', { className: 'card-actions' });
+
+    const revealBtn = Utils.createElement('button', {
+      className: 'btn btn-secondary btn-sm',
+      textContent: 'Revelar',
+      onClick: () => _handleRevealSecret(secret.id, valueEl, revealBtn)
+    });
+    actions.appendChild(revealBtn);
+
+    const editBtn = Utils.createElement('button', {
+      className: 'btn btn-secondary btn-sm',
+      textContent: 'Editar',
+      onClick: () => _showEditSecretForm(secret.id, secret.name)
+    });
+    actions.appendChild(editBtn);
 
     const deleteBtn = Utils.createElement('button', {
       className: 'btn btn-danger btn-sm',
@@ -341,6 +388,37 @@ const App = (() => {
 
     card.appendChild(actions);
     return card;
+  }
+
+  async function _handleRevealSecret(id, valueEl, btn) {
+    if (btn.dataset.revealed === 'true') {
+      valueEl.textContent = 'Valor: Oculto';
+      valueEl.className = 'card-meta secret-value-hidden';
+      btn.textContent = 'Revelar';
+      btn.dataset.revealed = 'false';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Descifrando...';
+
+    try {
+      const res = await API.revealSecret(id);
+      if (res.ok && res.data) {
+        valueEl.textContent = 'Valor: ' + Utils.escapeHtml(res.data.value);
+        valueEl.className = 'card-meta secret-value-revealed';
+        btn.textContent = 'Ocultar';
+        btn.dataset.revealed = 'true';
+      } else {
+        valueEl.textContent = 'Valor: Error al descifrar';
+        valueEl.className = 'card-meta secret-value-error';
+      }
+    } catch (err) {
+      valueEl.textContent = 'Valor: Error de conexion';
+      valueEl.className = 'card-meta secret-value-error';
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   function _showCreateSecretForm() {
@@ -395,6 +473,70 @@ const App = (() => {
         _loadSecrets();
       } else {
         const msg = typeof res.data === 'string' ? res.data : (res.data?.error || 'Error al crear secreto.');
+        Utils.setMessage('#secrets-msg', msg, 'error');
+      }
+    } catch (err) {
+      Utils.setMessage('#secrets-msg', 'Error de conexion.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; }
+    }
+  }
+
+  function _showEditSecretForm(secretId, currentName) {
+    const container = Utils.$('#create-secret-form-container');
+    if (!container) return;
+    Utils.clearElement(container);
+
+    const form = Utils.createElement('form', { className: 'inline-form', id: 'edit-secret-form' });
+    form.appendChild(_createInput('edit-secret-name', 'text', 'Nuevo nombre (3-100 chars)', false));
+    form.appendChild(_createInput('edit-secret-value', 'text', 'Nuevo valor (vacio = sin cambio)', false));
+
+    const actions = Utils.createElement('div', { className: 'form-actions' });
+    const saveBtn = Utils.createElement('button', { type: 'submit', className: 'btn btn-primary btn-sm', textContent: 'Actualizar' });
+    const cancelBtn = Utils.createElement('button', {
+      className: 'btn btn-secondary btn-sm',
+      textContent: 'Cancelar',
+      onClick: () => Utils.clearElement(container)
+    });
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+    form.appendChild(actions);
+
+    form.addEventListener('submit', (e) => _handleUpdateSecret(e, secretId));
+    container.appendChild(form);
+
+    const nameInput = Utils.$('#edit-secret-name');
+    if (nameInput) nameInput.value = currentName;
+    nameInput?.focus();
+  }
+
+  async function _handleUpdateSecret(e, secretId) {
+    e.preventDefault();
+    Utils.clearMessage('#secrets-msg');
+
+    const name = Utils.$('#edit-secret-name')?.value?.trim() || null;
+    const value = Utils.$('#edit-secret-value')?.value || null;
+
+    if (!name && !value) {
+      Utils.setMessage('#secrets-msg', 'Debes proporcionar un nombre o un valor.', 'error');
+      return;
+    }
+
+    if (name && (name.length < 3 || name.length > 100)) {
+      Utils.setMessage('#secrets-msg', 'El nombre debe tener entre 3 y 100 caracteres.', 'error');
+      return;
+    }
+
+    const btn = Utils.$('#edit-secret-form button[type="submit"]');
+    if (btn) { btn.disabled = true; }
+
+    try {
+      const res = await API.updateSecret(secretId, name, value);
+      if (res.ok) {
+        Utils.setMessage('#secrets-msg', 'Secreto actualizado.', 'success');
+        _loadSecrets();
+      } else {
+        const msg = typeof res.data === 'string' ? res.data : (res.data?.error || 'Error al actualizar.');
         Utils.setMessage('#secrets-msg', msg, 'error');
       }
     } catch (err) {
@@ -514,12 +656,30 @@ const App = (() => {
 
   // ==================== PROFILE ====================
 
-  function _renderProfile() {
+  async function _renderProfile() {
     const container = Utils.$('#profile-view');
     Utils.clearElement(container);
+    container.appendChild(Utils.createElement('p', { textContent: 'Cargando perfil...', className: 'loading' }));
 
-    const user = Auth.getUser();
-    if (!user) return;
+    let user = Auth.getUser();
+    let dbRole = Auth.getRole();
+    try {
+      const res = await API.getProfile();
+      if (res.ok && res.data) {
+        user = { id: res.data.id, name: res.data.name, email: res.data.email };
+        if (res.data.Rol !== undefined) {
+          dbRole = res.data.Rol;
+        }
+      }
+    } catch {
+    }
+
+    if (!user) {
+      Utils.clearElement(container);
+      return;
+    }
+
+    Utils.clearElement(container);
 
     const card = Utils.createElement('div', { className: 'profile-card' });
     card.appendChild(Utils.createElement('h2', { textContent: 'Mi Perfil' }));
@@ -527,7 +687,7 @@ const App = (() => {
     const info = Utils.createElement('div', { className: 'profile-info' });
     info.appendChild(_createInfoRow('Nombre', user.name));
     info.appendChild(_createInfoRow('Email', user.email));
-    info.appendChild(_createInfoRow('Rol', Auth.getRole()));
+    info.appendChild(_createInfoRow('Rol', dbRole || 'User'));
     card.appendChild(info);
 
     const hr1 = Utils.createElement('hr');
@@ -562,7 +722,7 @@ const App = (() => {
   function _createInfoRow(label, value) {
     const row = Utils.createElement('div', { className: 'info-row' });
     row.appendChild(Utils.createElement('span', { className: 'info-label', textContent: label + ':' }));
-    row.appendChild(Utils.createElement('span', { className: 'info-value', textContent: Utils.escapeHtml(value) }));
+    row.appendChild(Utils.createElement('span', { className: 'info-value', textContent: Utils.escapeHtml(value || '') }));
     return row;
   }
 

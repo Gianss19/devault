@@ -1,3 +1,3 @@
 namespace devault.DTO.RefreshTokens;
 
-public record RefreshTokenRequestDto(string Token);
+public record RefreshTokenRequestDto(string RefreshToken);

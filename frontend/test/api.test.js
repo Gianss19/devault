@@ -37,8 +37,11 @@ describe('API funciones existen', function () {
   it('createSecret es una funcion', function () { expect(typeof API.createSecret).toBe('function'); });
   it('getAllSecrets es una funcion', function () { expect(typeof API.getAllSecrets).toBe('function'); });
   it('getSecretById es una funcion', function () { expect(typeof API.getSecretById).toBe('function'); });
+  it('revealSecret es una funcion', function () { expect(typeof API.revealSecret).toBe('function'); });
+  it('updateSecret es una funcion', function () { expect(typeof API.updateSecret).toBe('function'); });
   it('deleteSecret es una funcion', function () { expect(typeof API.deleteSecret).toBe('function'); });
   it('getAllUsers es una funcion', function () { expect(typeof API.getAllUsers).toBe('function'); });
+  it('getProfile es una funcion', function () { expect(typeof API.getProfile).toBe('function'); });
   it('changeName es una funcion', function () { expect(typeof API.changeName).toBe('function'); });
   it('changePassword es una funcion', function () { expect(typeof API.changePassword).toBe('function'); });
   it('deleteUser es una funcion', function () { expect(typeof API.deleteUser).toBe('function'); });

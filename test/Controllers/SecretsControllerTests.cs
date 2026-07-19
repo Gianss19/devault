@@ -16,6 +16,7 @@ public class SecretsControllerTests
     private readonly DevaultDbContext _context;
     private readonly SecretsController _controller;
     private readonly Guid _userId;
+    private readonly Mock<IEncryptService> _encryptServiceMock;
 
     public SecretsControllerTests()
     {
@@ -26,11 +27,13 @@ public class SecretsControllerTests
 
         _userId = Guid.NewGuid();
 
-        var encryptServiceMock = new Mock<IEncryptService>();
-        encryptServiceMock.Setup(e => e.Encrypt(It.IsAny<string>()))
+        _encryptServiceMock = new Mock<IEncryptService>();
+        _encryptServiceMock.Setup(e => e.Encrypt(It.IsAny<string>()))
             .Returns((string s) => "encrypted_" + s);
+        _encryptServiceMock.Setup(e => e.Decrypt(It.IsAny<string>()))
+            .Returns((string s) => s.Replace("encrypted_", ""));
 
-        _controller = new SecretsController(encryptServiceMock.Object, _context);
+        _controller = new SecretsController(_encryptServiceMock.Object, _context);
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext
@@ -128,6 +131,90 @@ public class SecretsControllerTests
         var result = await _controller.GetSecretById(secret.Id);
 
         Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task RevealSecret_ReturnsDecryptedValueWhenOwnedByUser()
+    {
+        var secret = new Secret("MySecret", "encrypted_my_value", _userId);
+        _context.Secrets.Add(secret);
+        await _context.SaveChangesAsync();
+
+        var result = await _controller.RevealSecret(secret.Id);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<SecretDetailResponseDto>(okResult.Value);
+        Assert.Equal("MySecret", response.Name);
+        Assert.Equal("my_value", response.Value);
+    }
+
+    [Fact]
+    public async Task RevealSecret_ReturnsNotFoundWhenNotOwnedByUser()
+    {
+        var secret = new Secret("OtherSecret", "encrypted_val", Guid.NewGuid());
+        _context.Secrets.Add(secret);
+        await _context.SaveChangesAsync();
+
+        var result = await _controller.RevealSecret(secret.Id);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task UpdateSecret_UpdatesName_WhenOwnedByUser()
+    {
+        var secret = new Secret("OldName", "encrypted_val", _userId);
+        _context.Secrets.Add(secret);
+        await _context.SaveChangesAsync();
+
+        var update = new SecretUpdateDto("NewName", null);
+        var result = await _controller.UpdateSecret(secret.Id, update);
+
+        Assert.IsType<OkResult>(result);
+        var updated = await _context.Secrets.FindAsync(secret.Id);
+        Assert.Equal("NewName", updated!.Name);
+    }
+
+    [Fact]
+    public async Task UpdateSecret_UpdatesValue_WhenOwnedByUser()
+    {
+        var secret = new Secret("MySecret", "encrypted_old_value", _userId);
+        _context.Secrets.Add(secret);
+        await _context.SaveChangesAsync();
+
+        var update = new SecretUpdateDto(null, "new_value");
+        var result = await _controller.UpdateSecret(secret.Id, update);
+
+        Assert.IsType<OkResult>(result);
+        var updated = await _context.Secrets.FindAsync(secret.Id);
+        Assert.Equal("encrypted_new_value", updated!.EncryptedValue);
+    }
+
+    [Fact]
+    public async Task UpdateSecret_ReturnsNotFoundWhenNotOwnedByUser()
+    {
+        var secret = new Secret("OtherSecret", "encrypted_val", Guid.NewGuid());
+        _context.Secrets.Add(secret);
+        await _context.SaveChangesAsync();
+
+        var update = new SecretUpdateDto("NewName", null);
+        var result = await _controller.UpdateSecret(secret.Id, update);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task UpdateSecret_ReturnsBadRequestWhenNoFieldsProvided()
+    {
+        var secret = new Secret("MySecret", "encrypted_val", _userId);
+        _context.Secrets.Add(secret);
+        await _context.SaveChangesAsync();
+
+        var update = new SecretUpdateDto(null, null);
+        var result = await _controller.UpdateSecret(secret.Id, update);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal("Se debe proporcionar nombre o valor.", badRequest.Value);
     }
 
     [Fact]

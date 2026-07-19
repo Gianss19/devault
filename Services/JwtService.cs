@@ -48,6 +48,7 @@ public class JwtService : ITokenService
         {
             Subject = new ClaimsIdentity(claims),
             Issuer = _issuer,
+            Audience = _audience,
             Expires = DateTime.UtcNow.AddMinutes(30),
             SigningCredentials = signingCredentials
         };
