@@ -171,6 +171,29 @@ Configured in middleware and meta tags:
 
 ---
 
+## CORS
+
+Política `AllowFrontend` configurada:
+`AllowFrontend` policy configured:
+
+- En desarrollo / In development: permite `localhost`, `127.0.0.1`, orígenes configurados y origen `null` (para pruebas desde archivos locales)
+- En desarrollo: allows `localhost`, `127.0.0.1`, configured origins, and `null` origin (for local file testing)
+- En producción / In production: solo orígenes configurados vía `Cors:Origins` en configuración
+- In production: only origins configured via `Cors:Origins` in configuration
+- `AllowCredentials()` habilitado / enabled
+
+---
+
+## ForwardedHeaders
+
+Habilitado para reverse proxies (Azure App Service, Nginx, etc.):
+Enabled for reverse proxies (Azure App Service, Nginx, etc.):
+
+- `XForwardedFor` - Preserva la IP real del cliente / Preserves real client IP
+- `XForwardedProto` - Detecta HTTPS correctamente detrás del proxy / Correctly detects HTTPS behind proxy
+
+---
+
 ## Gestión de Secretos / Secret Management
 
 Los secretos de la aplicación no se incluyen en el control de versiones.

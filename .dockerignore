@@ -4,7 +4,7 @@
 **/bin
 **/obj
 **/test
-**/frontend
+**/frontend/node_modules
 **/Docs
 **/*.md
 **/*.user

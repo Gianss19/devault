@@ -1,6 +1,8 @@
 const API = (() => {
 
-  const BASE_URL = 'http://localhost:5164';
+  const BASE_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://localhost:5164'
+    : '';
 
   let _accessToken = null;
   let _refreshToken = null;

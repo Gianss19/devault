@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using devault.Models.Enums;
@@ -38,6 +39,8 @@ builder.Services.AddScoped<ITokenService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IHasherService, BcryptService>();
 
+var configuredOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -56,7 +59,9 @@ builder.Services.AddCors(options =>
                   try
                   {
                       var uri = new Uri(origin);
-                      return uri.Host == "localhost" || uri.Host == "127.0.0.1";
+                      if (uri.Host == "localhost" || uri.Host == "127.0.0.1") return true;
+                      return configuredOrigins.Any(o =>
+                          uri.Host.Equals(new Uri(o).Host, StringComparison.OrdinalIgnoreCase));
                   }
                   catch { return false; }
               })
@@ -159,6 +164,11 @@ app.UseExceptionHandler(appError =>
     });
 });
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
@@ -170,6 +180,9 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("AllowFrontend");
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 if (!app.Environment.IsDevelopment())
 {

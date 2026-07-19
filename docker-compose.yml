@@ -22,13 +22,13 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "5164:5164"
+      - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://+:5164
+      ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=devault;Username=postgres;Password=${DB_PASSWORD:?DB_PASSWORD must be set}"
       Jwt__SecretKey: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set}
       Jwt__Issuer: devault

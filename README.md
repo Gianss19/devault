@@ -7,9 +7,9 @@ Backend API para gestión de secretos cifrados con autenticación JWT.
 
 ## Descripción / Description
 
-**ES:** DevVault es un proyecto backend construido en ASP.NET Core (.NET 10) que permite a los usuarios registrar cuentas, autenticarse y almacenar secretos de forma segura. Los secretos se cifran con AES-256-GCM antes de persistirse en PostgreSQL, garantizando que el texto plano nunca se almacene en la base de datos.
+**ES:** DevVault es un proyecto construido en ASP.NET Core (.NET 10) con arquitectura **Modular Monolith** que permite a los usuarios registrar cuentas, autenticarse y almacenar secretos de forma segura. Los secretos se cifran con AES-256-GCM antes de persistirse en PostgreSQL, garantizando que el texto plano nunca se almacene en la base de datos.
 
-**EN:** DevVault is a backend project built in ASP.NET Core (.NET 10) that allows users to register accounts, authenticate, and store secrets securely. Secrets are encrypted with AES-256-GCM before being persisted in PostgreSQL, ensuring plaintext is never stored in the database.
+**EN:** DevVault is a project built in ASP.NET Core (.NET 10) following a **Modular Monolith** architecture that allows users to register accounts, authenticate, and store secrets securely. Secrets are encrypted with AES-256-GCM before being persisted in PostgreSQL, ensuring plaintext is never stored in the database.
 
 > **Nota / Note:** Este proyecto tiene enfoque en **backend**. El frontend incluido fue desarrollado por una IA con el único propósito de proveer una interfaz gráfica para interactuar con la API. No refleja un diseño de UI propio.
 >
@@ -121,8 +121,8 @@ docker compose logs -f api        # Ver logs de la API / View API logs
 docker compose down -v            # Detener y eliminar volumes (borra BD) / Stop and remove volumes (deletes DB)
 ```
 
-La API estara en `http://localhost:5164` y PostgreSQL en `localhost:5432`.
-The API will be at `http://localhost:5164` and PostgreSQL at `localhost:5432`.
+La API estara en `http://localhost:8080` y PostgreSQL en `localhost:5432`.
+The API will be at `http://localhost:8080` and PostgreSQL at `localhost:5432`.
 
 ---
 
@@ -219,5 +219,5 @@ Ver / See [Docs/SECURITY.md](Docs/SECURITY.md) for details.
 ## Documentación / Documentation
 
 - [Referencia API / API Reference](Docs/API.md)
-- [Arquitectura / Architecture](Docs/ARCHITECTURE.md)
+- [Arquitectura Modular Monolith / Modular Monolith Architecture](Docs/ARCHITECTURE.md)
 - [Seguridad / Security](Docs/SECURITY.md)

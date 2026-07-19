@@ -2,8 +2,8 @@
 
 ## Visión General / Overview
 
-Devault sigue una arquitectura **Clean Architecture** simplificada con separación en capas.
-Devault follows a simplified **Clean Architecture** with layer separation.
+Devault sigue una arquitectura **Modular Monolith** con separación por módulos dentro de un único proyecto desplegable.
+Devault follows a **Modular Monolith** architecture with module separation within a single deployable project.
 
 ```
 Controllers → Services → Data (EF Core) → PostgreSQL
@@ -11,8 +11,12 @@ Controllers → Services → Data (EF Core) → PostgreSQL
   DTOs         Interfaces
 ```
 
-El patrón principal es **Dependency Injection** con contratos (interfaces) en `Interfaces/` e implementaciones en `Services/`.
-The main pattern is **Dependency Injection** with contracts (interfaces) in `Interfaces/` and implementations in `Services/`.
+Cada módulo (Auth, Secrets, Users) agrupa su controller, DTOs y lógica de negocio en un mismo proyecto. Los servicios comparten `DevaultDbContext` a través de Dependency Injection.
+Each module (Auth, Secrets, Users) groups its controller, DTOs, and business logic in a single project. Services share `DevaultDbContext` via Dependency Injection.
+
+> **Por qué Modular Monolith / Why Modular Monolith:** Un monolith modular es suficiente para esta escala y evita el over-engineering de Clean Architecture (proyectos separados, capas innecesarias). Si el sistema crece, los módulos pueden extraerse a servicios separados sin reescribir la lógica de negocio.
+>
+> A modular monolith is sufficient at this scale and avoids the over-engineering of Clean Architecture (separate projects, unnecessary layers). If the system grows, modules can be extracted to separate services without rewriting business logic.
 
 > **Nota / Note:** Este proyecto tiene enfoque en **backend**. El frontend fue desarrollado por una IA con el único propósito de proveer una UI para interactuar con la API.
 > This project is **backend-focused**. The frontend was developed by AI solely to provide a UI for API interaction.
@@ -157,15 +161,18 @@ El orden del pipeline en `Program.cs`:
 Pipeline order in `Program.cs`:
 
 1. Exception Handler (manejo global de errores / global error handling)
-2. Security Headers (X-Content-Type-Options, X-Frame-Options, CSP)
-3. CORS (orígenes configurados / configured origins)
-4. HSTS (solo producción / production only)
-5. HTTPS Redirection
-6. Rate Limiter (10 req / 10 seg por usuario)
-7. Authentication (JWT Bearer)
-8. Authorization (roles)
-9. Controllers
-10. Health Checks (`/health`)
+2. ForwardedHeaders (para reverse proxies como Azure / for reverse proxies like Azure)
+3. Security Headers (X-Content-Type-Options, X-Frame-Options, CSP)
+4. CORS (orígenes configurados / configured origins)
+5. Default Files (servir index.html como raíz / serve index.html as root)
+6. Static Files (frontend desde wwwroot / frontend from wwwroot)
+7. HSTS (solo producción / production only)
+8. HTTPS Redirection
+9. Rate Limiter (10 req / 10 seg por usuario + 5 req / min en login)
+10. Authentication (JWT Bearer)
+11. Authorization (roles)
+12. Controllers
+13. Health Checks (`/health`)
 
 ---
 
