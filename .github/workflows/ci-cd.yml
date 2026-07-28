@@ -44,8 +44,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Publish
+      - name: Restore & Publish
         run: |
+          dotnet restore
           dotnet publish -c Release -o ./publish --no-restore
           ls -la publish/wwwroot
 
