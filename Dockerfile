@@ -14,7 +14,6 @@ RUN groupadd --system --gid 1001 appgroup && \
     useradd --system --uid 1001 --gid appgroup appuser
 
 COPY --from=build /app/publish .
-COPY frontend/ ./wwwroot/
 
 USER appuser
 

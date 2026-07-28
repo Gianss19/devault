@@ -9,8 +9,6 @@ obj/
 .sql
 
 appsettings.Development.json
-appsettings.Production.json
-
 *.log
 *.cache
 *.swp
